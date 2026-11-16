@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Maker Desk</title>
+  <style>
+    :root {
+      --ink: #292820;
+      --muted: #77766f;
+      --paper: #f7f6f2;
+      --surface: #fff;
+      --line: #e9e7e0;
+      --accent: #6857d9;
+      --accent-light: #f0edff;
+      --green: #2c7959;
+      --shadow: 0 12px 36px rgba(39, 36, 24, .07);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+    body { margin: 0; color: var(--ink); background: var(--paper); }
+    button, input { font: inherit; }
+    button { cursor: pointer; }
+    .shell { max-width: 1180px; margin: 0 auto; padding: 32px 28px 60px; }
+
+    header { display: flex; justify-content: space-between; align-items: center; gap: 20px; margin-bottom: 32px; }
+    .brand { display: flex; align-items: center; gap: 12px; }
+    .brand-mark {
+      display: grid; place-items: center; width: 42px; height: 42px;
+      border-radius: 14px; color: white; background: var(--accent);
+      font-size: 22px; box-shadow: 0 6px 16px #6857d944;
+    }
+    h1 { margin: 0; font-size: 21px; letter-spacing: -.5px; }
+    .brand p { margin: 3px 0 0; color: var(--muted); font-size: 13px; }
+    .today-pill { padding: 9px 13px; border: 1px solid var(--line); border-radius: 999px; background: white; color: var(--muted); font-size: 13px; }
+
+    .tabs { display: flex; gap: 8px; width: fit-content; padding: 6px; margin-bottom: 26px; border: 1px solid var(--line); border-radius: 15px; background: #eeede8; }
+    .tab-button { border: 0; border-radius: 10px; padding: 10px 16px; background: transparent; color: var(--muted); font-weight: 600; }
+    .tab-button.active { background: white; color: var(--ink); box-shadow: 0 2px 7px #24231f0d; }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    .section-heading { display: flex; align-items: end; justify-content: space-between; gap: 20px; margin-bottom: 22px; }
+    h2 { margin: 0; font-size: 25px; letter-spacing: -.7px; }
+    .section-heading p { margin: 7px 0 0; color: var(--muted); font-size: 14px; }
+    .panel, .calendar-wrap { border: 1px solid var(--line); border-radius: 18px; background: var(--surface); box-shadow: var(--shadow); }
+    .panel { padding: 24px; }
+
+    .calculator-grid { display: grid; grid-template-columns: 1.2fr .8fr; gap: 22px; }
+    .field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 17px; }
+    .field { display: flex; flex-direction: column; gap: 8px; }
+    .field label { color: #55544e; font-size: 13px; font-weight: 650; }
+    .input-wrap { position: relative; }
+    .input-wrap span { position: absolute; top: 50%; left: 13px; transform: translateY(-50%); color: #99978f; }
+    .input-wrap input { width: 100%; padding: 12px 12px 12px 30px; border: 1px solid var(--line); border-radius: 11px; outline: none; color: var(--ink); background: white; }
+    .input-wrap input:focus, .plain-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px #6857d91a; }
+    .plain-input { width: 100%; padding: 12px; border: 1px solid var(--line); border-radius: 11px; outline: none; }
+    .helper { color: var(--muted); font-size: 12px; line-height: 1.5; }
+    .results { display: grid; gap: 12px; }
+    .result-box { padding: 20px; border: 1px solid var(--line); border-radius: 14px; background: #fbfaf8; }
+    .result-box.highlight { border-color: #e3defd; background: var(--accent-light); }
+    .result-label { color: var(--muted); font-size: 13px; font-weight: 600; }
+    .result-value { margin-top: 8px; font-size: 30px; font-weight: 750; letter-spacing: -1px; }
+    .result-note { margin-top: 5px; color: var(--muted); font-size: 12px; }
+
+    .upload-box { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 18px; border: 1px dashed #d3d0c7; border-radius: 14px; background: #fcfbf9; }
+    .upload-box strong { display: block; margin-bottom: 4px; font-size: 14px; }
+    .upload-box p { margin: 0; color: var(--muted); font-size: 12px; }
+    .upload-controls { display: flex; gap: 10px; align-items: center; }
+    .tag-input { width: 190px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; outline: none; }
+    .primary-btn, .secondary-btn, .danger-btn { border: 0; border-radius: 10px; padding: 10px 14px; font-weight: 650; }
+    .primary-btn { color: white; background: var(--accent); }
+    .primary-btn:hover { background: #5847c7; }
+    .secondary-btn { color: var(--ink); background: #f0efeb; }
+    .danger-btn { color: #a74444; background: #fff0ef; }
+    .image-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 16px; margin-top: 20px; }
+    .image-card { overflow: hidden; border: 1px solid var(--line); border-radius: 14px; background: white; }
+    .image-card img { display: block; width: 100%; height: 165px; object-fit: cover; background: #f0efeb; }
+    .image-info { padding: 12px; }
+    .image-name { overflow: hidden; margin: 0 0 9px; font-size: 13px; font-weight: 650; text-overflow: ellipsis; white-space: nowrap; }
+    .tag-list { display: flex; flex-wrap: wrap; gap: 5px; min-height: 22px; margin-bottom: 11px; }
+    .tag { padding: 4px 8px; border-radius: 999px; color: #5749b6; background: var(--accent-light); font-size: 11px; }
+    .delete-image { padding: 6px 9px; border: 0; border-radius: 8px; color: #9c4a4a; background: #fff2f0; font-size: 12px; }
+    .empty-state { padding: 46px 16px; color: var(--muted); text-align: center; }
+    .empty-state .empty-icon { margin-bottom: 10px; font-size: 28px; }
+
+    .task-entry { display: flex; gap: 10px; margin-bottom: 18px; }
+    .task-entry input { flex: 1; padding: 13px 15px; border: 1px solid var(--line); border-radius: 12px; outline: none; background: white; }
+    .task-entry input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px #6857d91a; }
+    .calendar-wrap { overflow: hidden; }
+    .calendar-toolbar { display: flex; align-items: center; justify-content: space-between; padding: 18px 20px; border-bottom: 1px solid var(--line); }
+    .calendar-toolbar h3 { margin: 0; font-size: 17px; }
+    .calendar-controls { display: flex; gap: 8px; }
+    .icon-btn { width: 34px; height: 34px; border: 1px solid var(--line); border-radius: 9px; color: var(--ink); background: white; font-size: 16px; }
+    .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); }
+    .weekday { padding: 11px 8px; color: var(--muted); background: #fbfaf8; text-align: center; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; }
+    .day-cell { min-height: 125px; padding: 9px; border-top: 1px solid var(--line); border-right: 1px solid var(--line); }
+    .day-cell:nth-child(7n) { border-right: 0; }
+    .day-number { display: grid; place-items: center; width: 26px; height: 26px; margin-bottom: 5px; color: #5e5c55; font-size: 12px; }
+    .day-cell.other-month .day-number { color: #bbb9b1; }
+    .day-cell.today .day-number { border-radius: 50%; color: white; background: var(--accent); font-weight: 700; }
+    .calendar-task { overflow: hidden; width: 100%; margin-top: 4px; padding: 6px 7px; border: 0; border-radius: 7px; color: #5043a8; background: var(--accent-light); text-align: left; text-overflow: ellipsis; white-space: nowrap; font-size: 11px; }
+    .calendar-task.done { color: var(--green); background: #eaf5ee; text-decoration: line-through; }
+    .calendar-hint { margin: 12px 2px 0; color: var(--muted); font-size: 12px; }
+
+    .modal-backdrop { position: fixed; inset: 0; z-index: 10; display: none; align-items: center; justify-content: center; padding: 20px; background: #17162280; }
+    .modal-backdrop.open { display: flex; }
+    .modal { width: min(520px, 100%); max-height: 85vh; overflow: auto; padding: 24px; border-radius: 18px; background: white; box-shadow: 0 25px 80px #0003; }
+    .modal-top { display: flex; justify-content: space-between; gap: 15px; align-items: flex-start; }
+    .modal h3 { margin: 0; font-size: 21px; }
+    .modal-date { margin: 7px 0 18px; color: var(--muted); font-size: 13px; }
+    .checklist { display: grid; gap: 9px; }
+    .check-row { display: flex; align-items: flex-start; gap: 10px; padding: 11px; border: 1px solid var(--line); border-radius: 10px; font-size: 13px; }
+    .check-row input { margin-top: 2px; accent-color: var(--accent); }
+    .check-row.checked span { color: #97958d; text-decoration: line-through; }
+    .modal-footer { display: flex; justify-content: space-between; gap: 10px; margin-top: 20px; }
+    .close-btn { border: 0; color: var(--muted); background: transparent; font-size: 22px; line-height: 1; }
+    .toast { position: fixed; right: 20px; bottom: 20px; z-index: 20; display: none; padding: 12px 16px; border-radius: 10px; color: white; background: #29272f; box-shadow: var(--shadow); font-size: 13px; }
+    .toast.show { display: block; }
+
+    @media (max-width: 760px) {
+      .shell { padding: 22px 16px 40px; }
+      header { align-items: flex-start; }
+      .calculator-grid { grid-template-columns: 1fr; }
+      .upload-box { align-items: stretch; flex-direction: column; }
+      .upload-controls { align-items: stretch; flex-direction: column; }
+      .tag-input { width: 100%; }
+      .day-cell { min-height: 90px; padding: 5px; }
+      .calendar-task { padding: 5px; font-size: 10px; }
+      .weekday { font-size: 9px; }
+    }
+    @media (max-width: 480px) {
+      .tabs { width: 100%; }
+      .tab-button { flex: 1; padding: 10px 7px; font-size: 12px; }
+      .today-pill { display: none; }
+      .field-grid { grid-template-columns: 1fr; }
+      .section-heading { align-items: flex-start; flex-direction: column; }
+      .day-cell { min-height: 76px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header>
+      <div class="brand">
+        <div class="brand-mark">✳</div>
+        <div>
+          <h1>Maker Desk</h1>
+          <p>Your little corner for making things happen.</p>
+        </div>
+      </div>
+      <div class="today-pill" id="todayPill"></div>
+    </header>
+
+    <nav class="tabs" aria-label="Maker Desk tools">
+      <button class="tab-button active" data-tab="calculator">Profit Calculator</button>
+      <button class="tab-button" data-tab="library">Design Library</button>
+      <button class="tab-button" data-tab="calendar">Task Calendar</button>
+    </nav>
+
+    <main>
+      <section class="tab-panel active" id="calculator">
+        <div class="section-heading">
+          <div>
+            <h2>Profit Calculator</h2>
+            <p>Know your numbers before you make the next one.</p>
+          </div>
+        </div>
+        <div class="calculator-grid">
+          <div class="panel">
+            <div class="field-grid">
+              <div class="field">
+                <label for="cost">Product cost</label>
+                <div class="input-wrap"><span>$</span><input id="cost" type="number" min="0" step="0.01" value="12"></div>
+              </div>
+              <div class="field">
+                <label for="shipping">Shipping cost</label>
+                <div class="input-wrap"><span>$</span><input id="shipping" type="number" min="0" step="0.01" value="4"></div>
+              </div>
+              <div class="field">
+                <label for="fees">Marketplace fees</label>
+                <div class="input-wrap"><span>%</span><input id="fees" type="number" min="0" max="99.9" step="0.1" value="8"></div>
+              </div>
+              <div class="field">
+                <label for="ads">Ad cost per sale</label>
+                <div class="input-wrap"><span>$</span><input id="ads" type="number" min="0" step="0.01" value="2"></div>
+              </div>
+              <div class="field" style="grid-column: 1 / -1">
+                <label for="price">Selling price</label>
+                <div class="input-wrap"><span>$</span><input id="price" type="number" min="0" step="0.01" value="35"></div>
+                <div class="helper">Break-even includes product cost, shipping, ads, and percentage-based fees.</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="results">
+            <div class="result-box highlight">
+              <div class="result-label">Break-even price</div>
+              <div class="result-value" id="breakEven">$0.00</div>
+              <div class="result-note">The minimum price to cover your costs.</div>
+            </div>
+            <div class="result-box">
+              <div class="result-label">Profit per sale</div>
+              <div class="result-value" id="profit">$0.00</div>
+              <div class="result-note">After costs, ads, and marketplace fees.</div>
+            </div>
+            <div class="result-box">
+              <div class="result-label">Profit margin</div>
+              <div class="result-value" id="margin">0%</div>
+              <div class="result-note">Profit as a percentage of your selling price.</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="tab-panel" id="library">
+        <div class="section-heading">
+          <div>
+            <h2>Design Library</h2>
+            <p>Keep your inspiration and creative assets close at hand.</p>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="upload-box">
+            <div>
+              <strong>Add an image to your library</strong>
+              <p>Images are saved in this browser using IndexedDB.</p>
+            </div>
+            <div class="upload-controls">
+              <input class="tag-input" id="imageTags" type="text" placeholder="Tags, separated by commas">
+              <button class="primary-btn" id="chooseImages">Choose images</button>
+              <input id="imageFiles" type="file" accept="image/*" multiple hidden>
+            </div>
+          </div>
+          <div id="imageGrid" class="image-grid"></div>
+        </div>
+      </section>
+
+      <section class="tab-panel" id="calendar">
+        <div class="section-heading">
+          <div>
+            <h2>Task Calendar</h2>
+            <p>Add a task and Maker Desk will find a date for it, 2–4 days from now.</p>
+          </div>
+        </div>
+
+        <form class="task-entry" id="taskForm">
+          <input id="taskTitle" type="text" maxlength="100" placeholder="What needs doing? Press Enter to add a task…" autocomplete="off" required>
+          <button class="primary-btn" type="submit">Add task</button>
+        </form>
+
+        <div class="calendar-wrap">
+          <div class="calendar-toolbar">
+            <h3 id="monthLabel"></h3>
+            <div class="calendar-controls">
+              <button class="icon-btn" id="prevMonth" aria-label="Previous month">‹</button>
+              <button class="icon-btn" id="nextMonth" aria-label="Next month">›</button>
+            </div>
+          </div>
+          <div class="calendar-grid" id="calendarGrid"></div>
+        </div>
+        <p class="calendar-hint">Select a task card to view or update its checklist.</p>
+      </section>
+    </main>
+  </div>
+
+  <div class="modal-backdrop" id="taskModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal">
+      <div class="modal-top">
+        <div>
+          <h3 id="modalTitle"></h3>
+          <p class="modal-date" id="modalDate"></p>
+        </div>
+        <button class="close-btn" id="closeModal" aria-label="Close dialog">×</button>
+      </div>
+      <div class="checklist" id="checklist"></div>
+      <div class="modal-footer">
+        <button class="danger-btn" id="deleteTask">Delete task</button>
+        <button class="secondary-btn" id="doneModal">Done</button>
+      </div>
+    </div>
+  </div>
+  <div class="toast" id="toast" role="status"></div>
+
+  <script>
+    // Tabs
+    document.querySelectorAll(".tab-button").forEach(button => {
+      button.addEventListener("click", () => {
+        document.querySelectorAll(".tab-button").forEach(item => item.classList.remove("active"));
+        document.querySelectorAll(".tab-panel").forEach(item => item.classList.remove("active"));
+        button.classList.add("active");
+        document.getElementById(button.dataset.tab).classList.add("active");
+      });
+    });
+
+    // Profit calculator
+    const calcInputs = ["cost", "shipping", "fees", "ads", "price"];
+    const money = value => new Intl.NumberFormat(undefined, { style: "currency", currency: "USD" }).format(value);
+
+    function updateCalculator() {
+      const value = id => Math.max(0, Number(document.getElementById(id).value) || 0);
+      const cost = value("cost");
+      const shipping = value("shipping");
+      const fees = Math.min(99.9, value("fees")) / 100;
+      const ads = value("ads");
+      const price = value("price");
+      const breakEven = (cost + shipping + ads) / (1 - fees);
+      const profit = price * (1 - fees) - cost - shipping - ads;
+      const margin = price > 0 ? (profit / price) * 100 : 0;
+
+      document.getElementById("breakEven").textContent = money(breakEven);
+      document.getElementById("profit").textContent = money(profit);
+      document.getElementById("profit").style.color = profit < 0 ? "#b84d4d" : "var(--ink)";
+      document.getElementById("margin").textContent = `${margin.toFixed(1)}%`;
+      document.getElementById("margin").style.color = margin < 0 ? "#b84d4d" : "var(--ink)";
+    }
+    calcInputs.forEach(id => document.getElementById(id).addEventListener("input", updateCalculator));
+    updateCalculator();
+
+    // IndexedDB image library
+    const DB_NAME = "maker-desk-library";
+    const DB_VERSION = 1;
+    const STORE_NAME = "images";
+    let db;
+    let activeObjectUrls = [];
+
+    function openImageDatabase() {
+      return new Promise((resolve, reject) => {
+        const request = indexedDB.open(DB_NAME, DB_VERSION);
+        request.onupgradeneeded = () => {
+          const database = request.result;
+          if (!database.objectStoreNames.contains(STORE_NAME)) {
+            database.createObjectStore(STORE_NAME, { keyPath: "id", autoIncrement: true });
+          }
+        };
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+      });
+    }
+
+    function imageTransaction(mode) {
+      return db.transaction(STORE_NAME, mode).objectStore(STORE_NAME);
+    }
+
+    function getAllImages() {
+      return new Promise((resolve, reject) => {
+        const request = imageTransaction("readonly").getAll();
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+      });
+    }
+
+    function addImage(record) {
+      return new Promise((resolve, reject) => {
+        const request = imageTransaction("readwrite").add(record);
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+      });
+    }
+
+    function removeImage(id) {
+      return new Promise((resolve, reject) => {
+        const request = imageTransaction("readwrite").delete(id);
+        request.onsuccess = resolve;
+        request.onerror = () => reject(request.error);
+      });
+    }
+
+    function showToast(message) {
+      const toast = document.getElementById("toast");
+      toast.textContent = message;
+      toast.classList.add("show");
+      clearTimeout(showToast.timeout);
+      showToast.timeout = setTimeout(() => toast.classList.remove("show"), 2600);
+    }
+
+    async function renderImages() {
+      const grid = document.getElementById("imageGrid");
+      activeObjectUrls.forEach(URL.revokeObjectURL);
+      activeObjectUrls = [];
+
+      try {
+        const images = await getAllImages();
+        if (!images.length) {
+          grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">▧</div>Your design library is empty. Add an image to get started.</div>';
+          return;
+        }
+
+        grid.replaceChildren();
+        images.sort((a, b) => b.createdAt - a.createdAt).forEach(image => {
+          const card = document.createElement("article");
+          card.className = "image-card";
+
+          const img = document.createElement("img");
+          img.alt = image.name;
+          img.src = URL.createObjectURL(image.blob);
+          activeObjectUrls.push(img.src);
+
+          const info = document.createElement("div");
+          info.className = "image-info";
+
+          const name = document.createElement("p");
+          name.className = "image-name";
+          name.textContent = image.name;
+          name.title = image.name;
+
+          const tags = document.createElement("div");
+          tags.className = "tag-list";
+          (image.tags || []).forEach(text => {
+            const tag = document.createElement("span");
+            tag.className = "tag";
+            tag.textContent = text;
+            tags.appendChild(tag);
+          });
+
+          const remove = document.createElement("button");
+          remove.className = "delete-image";
+          remove.textContent = "Delete";
+          remove.addEventListener("click", async () => {
+            await removeImage(image.id);
+            renderImages();
+            showToast("Image deleted.");
+          });
+
+          info.append(name, tags, remove);
+          card.append(img, info);
+          grid.appendChild(card);
+        });
+      } catch (error) {
+        grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1">Could not load the image library. Try a browser that supports IndexedDB.</div>';
+      }
+    }
+
+    document.getElementById("chooseImages").addEventListener("click", () => {
+      document.getElementById("imageFiles").click();
+    });
+
+    document.getElementById("imageFiles").addEventListener("change", async event => {
+      const files = Array.from(event.target.files || []).filter(file => file.type.startsWith("image/"));
+      const tags = document.getElementById("imageTags").value
+        .split(",").map(tag => tag.trim()).filter(Boolean);
+
+      try {
+        for (const file of files) {
+          await addImage({
+            name: file.name,
+            blob: file,
+            tags,
+            createdAt: Date.now()
+          });
+        }
+        if (files.length) {
+          document.getElementById("imageTags").value = "";
+          showToast(`${files.length} image${files.length === 1 ? "" : "s"} added.`);
+        }
+        await renderImages();
+      } catch (error) {
+        showToast("Could not save image. It may be too large for browser storage.");
+      } finally {
+        event.target.value = "";
+      }
+    });
+
+    // Task calendar and storage
+    const TASKS_KEY = "maker-desk-tasks";
+    const monthCursor = new Date();
+    monthCursor.setDate(1);
+    let tasks = loadTasks();
+    let selectedTaskId = null;
+
+    function loadTasks() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(TASKS_KEY) || "[]");
+        return Array.isArray(saved) ? saved : [];
+      } catch {
+        return [];
+      }
+    }
+
+    function saveTasks() {
+      localStorage.setItem(TASKS_KEY, JSON.stringify(tasks));
+    }
+
+    function localDateString(date) {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, "0");
+      const day = String(date.getDate()).padStart(2, "0");
+      return `${year}-${month}-${day}`;
+    }
+
+    function parseLocalDate(dateString) {
+      const [year, month, day] = dateString.split("-").map(Number);
+      return new Date(year, month - 1, day);
+    }
+
+    function formatDate(dateString) {
+      return parseLocalDate(dateString).toLocaleDateString(undefined, {
+        weekday: "long", month: "long", day: "numeric", year: "numeric"
+      });
+    }
+
+    const checklistTemplates = [
+      { words: ["launch"], items: ["Confirm the launch date and goals", "Prepare product page and listing details", "Check inventory and pricing", "Share the launch announcement"] },
+      { words: ["shipping"], items: ["Confirm the shipping address", "Choose packaging and shipping method", "Print the label and check tracking", "Send the customer an update"] },
+      { words: ["order"], items: ["Review order details and customization", "Check stock and confirm availability", "Prepare and pack the order", "Mark the order complete"] },
+      { words: ["email"], items: ["Decide the email’s goal and audience", "Draft the subject line and message", "Check links, spelling, and details", "Schedule or send the email"] },
+      { words: ["restock"], items: ["Count current inventory", "List materials needed", "Make or order stock", "Update inventory counts"] },
+      { words: ["photo"], items: ["Prepare the product and props", "Set up lighting and background", "Take and select photos", "Edit and upload final images"] },
+      { words: ["sale"], items: ["Choose products and discount", "Set start and end dates", "Update listings and promotional materials", "Check results after the sale"] },
+      { words: ["packaging"], items: ["Choose the packaging materials", "Check sizes and quantities", "Prepare labels or inserts", "Pack a sample and review it"] }
+    ];
+
+    function makeChecklist(title) {
+      const normalizedTitle = title.toLowerCase();
+      const matched = checklistTemplates.filter(template =>
+        template.words.some(word => new RegExp(`\\b${word}\\b`, "i").test(normalizedTitle))
+      );
+      const items = matched.length
+        ? [...new Set(matched.flatMap(template => template.items))]
+        : ["Break the task into a few small steps", "Gather the supplies or information you need", "Set aside time to work on it", "Review the result and mark it complete"];
+      return items.map(text => ({ text, done: false }));
+    }
+
+    function renderCalendar() {
+      const grid = document.getElementById("calendarGrid");
+      const year = monthCursor.getFullYear();
+      const month = monthCursor.getMonth();
+
+      document.getElementById("monthLabel").textContent =
+        monthCursor.toLocaleDateString(undefined, { month: "long", year: "numeric" });
+
+      grid.replaceChildren();
+      ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].forEach(day => {
+        const heading = document.createElement("div");
+        heading.className = "weekday";
+        heading.textContent = day;
+        grid.appendChild(heading);
+      });
+
+      const firstDay = new Date(year, month, 1).getDay();
+      const start = new Date(year, month, 1 - firstDay);
+      const todayString = localDateString(new Date());
+
+      for (let i = 0; i < 42; i++) {
+        const date = new Date(start);
+        date.setDate(start.getDate() + i);
+        const dateString = localDateString(date);
+        const cell = document.createElement("div");
+        cell.className = "day-cell";
+        if (date.getMonth() !== month) cell.classList.add("other-month");
+        if (dateString === todayString) cell.classList.add("today");
+
+        const number = document.createElement("div");
+        number.className = "day-number";
+        number.textContent = date.getDate();
+        cell.appendChild(number);
+
+        tasks.filter(task => task.dueDate === dateString).forEach(task => {
+          const card = document.createElement("button");
+          card.className = "calendar-task" + (task.checklist.every(item => item.done) ? " done" : "");
+          card.textContent = task.title;
+          card.title = `${task.title} — open checklist`;
+          card.addEventListener("click", () => openTaskModal(task.id));
+          cell.appendChild(card);
+        });
+
+        grid.appendChild(cell);
+      }
+    }
+
+    document.getElementById("taskForm").addEventListener("submit", event => {
+      event.preventDefault();
+      const input = document.getElementById("taskTitle");
+      const title = input.value.trim();
+      if (!title) return;
+
+      const dueDate = new Date();
+      dueDate.setHours(12, 0, 0, 0);
+      dueDate.setDate(dueDate.getDate() + 2 + Math.floor(Math.random() * 3));
+
+      const task = {
+        id: (crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`),
+        title,
+        dueDate: localDateString(dueDate),
+        checklist: makeChecklist(title)
+      };
+
+      tasks.push(task);
+      saveTasks();
+      input.value = "";
+      monthCursor.setFullYear(dueDate.getFullYear(), dueDate.getMonth(), 1);
+      renderCalendar();
+      openTaskModal(task.id);
+    });
+
+    document.getElementById("prevMonth").addEventListener("click", () => {
+      monthCursor.setMonth(monthCursor.getMonth() - 1);
+      renderCalendar();
+    });
+
+    document.getElementById("nextMonth").addEventListener("click", () => {
+      monthCursor.setMonth(monthCursor.getMonth() + 1);
+      renderCalendar();
+    });
+
+    function openTaskModal(taskId) {
+      const task = tasks.find(item => item.id === taskId);
+      if (!task) return;
+      selectedTaskId = taskId;
+      document.getElementById("modalTitle").textContent = task.title;
+      document.getElementById("modalDate").textContent = `Due ${formatDate(task.dueDate)}`;
+
+      const list = document.getElementById("checklist");
+      list.replaceChildren();
+      task.checklist.forEach((item, index) => {
+        const label = document.createElement("label");
+        label.className = "check-row" + (item.done ? " checked" : "");
+
+        const checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+        checkbox.checked = Boolean(item.done);
+        checkbox.addEventListener("change", () => {
+          task.checklist[index].done = checkbox.checked;
+          saveTasks();
+          label.classList.toggle("checked", checkbox.checked);
+          renderCalendar();
+        });
+
+        const text = document.createElement("span");
+        text.textContent = item.text;
+        label.append(checkbox, text);
+        list.appendChild(label);
+      });
+
+      document.getElementById("taskModal").classList.add("open");
+    }
+
+    function closeTaskModal() {
+      document.getElementById("taskModal").classList.remove("open");
+      selectedTaskId = null;
+    }
+
+    document.getElementById("closeModal").addEventListener("click", closeTaskModal);
+    document.getElementById("doneModal").addEventListener("click", closeTaskModal);
+    document.getElementById("taskModal").addEventListener("click", event => {
+      if (event.target.id === "taskModal") closeTaskModal();
+    });
+
+    document.getElementById("deleteTask").addEventListener("click", () => {
+      if (!selectedTaskId) return;
+      tasks = tasks.filter(task => task.id !== selectedTaskId);
+      saveTasks();
+      closeTaskModal();
+      renderCalendar();
+      showToast("Task deleted.");
+    });
+
+    document.addEventListener("keydown", event => {
+      if (event.key === "Escape") closeTaskModal();
+    });
+
+    document.getElementById("todayPill").textContent =
+      new Date().toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" });
+
+    renderCalendar();
+
+    openImageDatabase()
+      .then(database => {
+        db = database;
+        renderImages();
+      })
+      .catch(() => {
+        document.getElementById("imageGrid").innerHTML =
+          '<div class="empty-state" style="grid-column:1/-1">Could not open IndexedDB. Check your browser settings and reload.</div>';
+      });
+  </script>
+</body>
+</html>
